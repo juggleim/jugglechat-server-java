@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.UserExtMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.UserExt">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="item_key" property="itemKey" jdbcType="VARCHAR"/>
+        <result column="item_value" property="itemValue" jdbcType="VARCHAR"/>
+        <result column="item_type" property="itemType" jdbcType="TINYINT"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="upsert" parameterType="UserExt">
+        INSERT INTO userexts (app_key,user_id,item_key,item_value,item_type)
+        VALUES (#{appkey}, #{userId}, #{itemKey}, #{itemValue}, #{itemType})  ON DUPLICATE KEY UPDATE item_value=VALUES(item_value)
+    </insert>
+
+    <insert id="batchUpsert">
+        INSERT INTO userexts (app_key,user_id,item_key,item_value,item_type) 
+        VALUES
+        <foreach collection="exts" item="ext" separator=",">
+            (#{ext.appkey},#{ext.userId},#{ext.itemKey},#{ext.itemValue},#{ext.itemType})
+        </foreach>
+    </insert>
+
+    <delete id="batchDelete">
+        DELETE FROM userexts WHERE app_key=#{appkey} AND item_key=#{itemKey} AND user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
+    <select id="qryExtFields" resultMap="BaseResultMap">
+        SELECT * FROM userexts WHERE app_key=#{appkey} AND user_id=#{userId}
+    </select>
+
+    <select id="qryExtFieldsByItemKeys" resultMap="BaseResultMap">
+        SELECT * FROM userexts WHERE app_key=#{appkey} AND user_id=#{userId} AND item_key IN
+        <foreach collection="itemKeys" item="itemKey" open="(" separator="," close=")">
+            #{itemKey}
+        </foreach>
+    </select>
+
+    <select id="qryExtsBaseItemKey" resultMap="BaseResultMap">
+        SELECT * FROM userexts WHERE app_key=#{appkey} AND item_key=#{itemKey} AND 
+        <![CDATA[
+            id > #{startId}
+        ]]>
+        limit #{limit}
+    </select>
+</mapper>

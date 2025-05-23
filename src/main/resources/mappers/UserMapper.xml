@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.UserMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.User">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="user_type" property="userType" jdbcType="TINYINT"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="nickname" property="nickname" jdbcType="VARCHAR"/>
+        <result column="user_portrait" property="userPortrait" jdbcType="VARCHAR"/>
+        <result column="pinyin" property="pinyin" jdbcType="VARCHAR"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>
+        <result column="login_account" property="loginAccount" jdbcType="VARCHAR"/>
+        <result column="login_pass" property="loginPass" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE app_key=#{appkey} AND user_id=#{userId}
+    </select>
+
+    <select id="findByUserIds" resultMap="BaseResultMap">
+        SELECT * FROM users 
+        WHERE app_key=#{appkey} 
+        AND user_id IN 
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+    <select id="findByPhone" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE app_key=#{appkey} AND phone=#{phone}
+    </select>
+
+    <select id="findByEmail" resultMap="BaseResultMap">
+        SELECT * FROM users WHERE app_key=#{appkey} AND email=#{email}
+    </select>
+
+    <insert id="create" parameterType="User">
+        INSERT INTO users (app_key,user_id,user_type,nickname,user_portrait,pinyin,phone,email,login_account,login_pass)
+        VALUES (#{appkey}, #{userId}, #{userType}, #{nickname},#{userPortrait},#{pinyin},#{phone},#{email},#{loginAccount},#{loginPass})
+    </insert>
+
+    <insert id="upsert" parameterType="User">
+        INSERT INTO users (app_key,user_id,user_type,nickname,user_portrait)
+        VALUES (#{appkey}, #{userId}, #{userType}, #{nickname},#{userPortrait})  ON DUPLICATE KEY UPDATE nickname=VALUES(nickname),user_portrait=VALUES(user_portrait)
+    </insert>
+
+    <update id="update" parameterType="User">
+        UPDATE users
+        SET nickname = #{nickname},
+            user_portrait = #{userPortrait}
+        WHERE app_key = #{appkey} AND user_id = #{userId}
+    </update>
+
+    <select id="count" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM users WHERE app_key=#{appkey}
+    </select>
+
+    <select id="countByTime" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM users WHERE app_key=#{appkey} AND created_time BETWEEN #{start} AND #{end}
+    </select>
+</mapper>
