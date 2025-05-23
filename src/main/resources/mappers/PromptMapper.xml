@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.PromptMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.Prompt">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="prompts" property="prompts" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="create" parameterType="Prompt">
+        INSERT INTO assistant_prompts (app_key,user_id,prompts)
+        VALUES (#{appkey}, #{userId}, #{prompts})
+    </insert>
+
+    <update id="updatePrompt">
+        UPDATE assistant_prompts
+        SET prompts=#{prompts}
+        WHERE app_key=#{appkey} AND id=#{id} AND user_id=#{userId}
+    </update>
+
+    <delete id="deletePrompt">
+        DELETE FROM assistant_prompts WHERE app_key=#{appkey} AND id=#{id} AND user_id=#{userId}
+    </delete>
+
+    <delete id="batchDeletePrompts">
+        DELETE FROM assistant_prompts WHERE app_key=#{appkey} AND user_id=#{userId} AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="findPrompt" resultMap="BaseResultMap">
+        SELECT * FROM assistant_prompts WHERE app_key=#{appkey} AND id=#{id} AND user_id=#{userId}
+    </select>
+
+    <select id="qryPrompts" resultMap="BaseResultMap">
+        SELECT * FROM assistant_prompts WHERE app_key=#{appkey} AND user_id=#{userId} AND 
+         <![CDATA[
+            id < #{startId}
+        ]]>
+        ORDER BY id desc 
+        limit #{limit}
+    </select>
+</mapper>

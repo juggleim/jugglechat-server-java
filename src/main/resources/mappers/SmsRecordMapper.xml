@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.SmsRecordMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.SmsRecord">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR"/>
+        <result column="code" property="code" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="create" parameterType="SmsRecord">
+        INSERT INTO smsrecords (app_key,phone,code)
+        VALUES (#{appkey}, #{phone}, #{code})
+    </insert>
+
+    <select id="findByPhoneCode" resultMap="BaseResultMap">
+        SELECT * FROM smsrecords WHERE app_key=#{appkey} AND phone=#{phone} AND code=#{code}
+    </select>
+
+    <select id="findByPhone" resultMap="BaseResultMap">
+        SELECT * FROM smsrecords WHERE app_key=#{appkey} AND phone=#{phone} AND 
+        <![CDATA[
+            created_time > #{start}
+        ]]>
+        limit #{limit}
+    </select>
+</mapper>

@@ -48,6 +48,7 @@
         <![CDATA[
             id > #{startId}
         ]]>
+        ORDER BY id asc 
         limit #{limit}
     </select>
 </mapper>

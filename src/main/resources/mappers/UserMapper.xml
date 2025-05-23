@@ -51,8 +51,10 @@
 
     <update id="update" parameterType="User">
         UPDATE users
-        SET nickname = #{nickname},
-            user_portrait = #{userPortrait}
+        <set>
+            <if test="nickname != null">nickname=#{nickname},</if>
+            <if test="userPortrait != null">user_portrait=#{userPortrait}</if>
+        </set> 
         WHERE app_key = #{appkey} AND user_id = #{userId}
     </update>
 

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.TeleBotMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.TeleBot">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="bot_name" property="botName" jdbcType="VARCHAR"/>
+        <result column="bot_token" property="botToken" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="create" parameterType="TeleBot">
+        INSERT INTO telebots (app_key,user_id,bot_name,bot_token,status)
+        VALUES (#{appkey}, #{userId}, #{botName}, #{botToken}, #{status})
+    </insert>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM telebots WHERE id=#{id} AND app_key=#{appkey} AND user_id=#{userId}
+    </select>
+
+    <delete id="batchDelete">
+        DELETE FROM telebots WHERE app_key=#{appkey} AND user_id=#{userId} AND id IN
+        <foreach collection="botIds" item="botId" open="(" separator="," close=")">
+            #{botId}
+        </foreach>
+    </delete>
+
+    <select id="qryTeleBots" resultMap="BaseResultMap">
+        SELECT * FROM telebots WHERE app_key=#{appkey} AND user_id=#{userId} AND 
+        <![CDATA[
+            id > #{startId}
+        ]]>
+        ORDER BY id asc
+        limit #{limit}
+    </select>
+</mapper>

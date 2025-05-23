@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.QrCodeRecordMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.QrCodeRecord">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="code_id" property="codeId" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="created_time" property="createdTime" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="create" parameterType="SmsRecord">
+        INSERT INTO qrcoderecords (app_key,code_id,created_time)
+        VALUES (#{appkey}, #{codeId}, #{createdTime})
+    </insert>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM qrcoderecords WHERE app_key=#{appkey} AND code_id=#{codeId}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE qrcoderecords
+        SET user_id=#{userId}, status=#{status}
+        WHERE app_key=#{appkey} AND code_id=#{codeId}
+    </update>
+</mapper>
