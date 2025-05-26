@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.AppInfoMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.AppInfo">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+        <result column="app_name" property="appName" jdbcType="VARCHAR"/>
+        <result column="app_secret" property="appSecret" jdbcType="VARCHAR"/>
+        <result column="app_secure_key" property="appSecureKey" jdbcType="VARCHAR"/>
+        <result column="app_status" property="appStatus" jdbcType="TINYINT"/>
+        <result column="app_type" property="appType" jdbcType="TINYINT"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="create" parameterType="AppInfo">
+        INSERT INTO appinfos (app_key, app_name, app_secret, app_secure_key, app_type)
+        VALUES (#{appkey}, #{appName}, #{appSecret}, #{appSecureKey}, #{appType})
+    </insert>
+
+    <insert id="upsert" parameterType="AppInfo">
+        INSERT INTO appinfos (app_key, app_name, app_secret, app_secure_key, app_type)
+        VALUES (#{appkey}, #{appName}, #{appSecret}, #{appSecureKey}, #{appType})
+    </insert>
+
+    <select id="findByAppkey" resultMap="BaseResultMap">
+        SELECT * FROM appinfos WHERE app_key = #{appkey}
+    </select>
+</mapper>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.AiEngineMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.AiEngine">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="engine_type" property="engineType" jdbcType="TINYINT"/>
+        <result column="engine_conf" property="engineConf" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="create" parameterType="AiEngine">
+        INSERT INTO ai_engines (engine_type, engine_conf, status, app_key)
+        VALUES (#{engineType}, #{engineConf}, #{status}, #{appkey})
+    </insert>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM ai_engines WHERE app_key = #{appkey} AND id = #{id}
+    </select>
+
+    <select id="findEnableAiEngine" resultMap="BaseResultMap">
+        SELECT * FROM ai_engines WHERE app_key = #{appkey}
+    </select>
+</mapper>

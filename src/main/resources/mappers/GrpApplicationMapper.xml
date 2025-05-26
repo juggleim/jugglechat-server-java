@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.GrpApplicationMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.GrpApplication">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="group_id" property="groupId" jdbcType="VARCHAR"/>
+        <result column="apply_type" property="applyType" jdbcType="TINYINT"/>
+        <result column="sponsor_id" property="sponsorId" jdbcType="VARCHAR"/>
+        <result column="recipient_id" property="recipientId" jdbcType="VARCHAR"/>
+        <result column="inviter_id" property="inviterId" jdbcType="VARCHAR"/>
+        <result column="operator_id" property="operatorId" jdbcType="VARCHAR"/>
+        <result column="apply_time" property="applyTime" jdbcType="BIGINT"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="inviteUpsert" parameterType="GrpApplication">
+        INSERT INTO grpapplications (app_key,apply_type,group_id,sponsor_id,recipient_id,inviter_id,operator_id,apply_time,status)
+        VALUES (#{appkey},0,#{groupId},#{sponsorId},#{recipientId},#{inviterId},#{operatorId},#{applyTime},#{status})
+        ON DUPLICATE KEY UPDATE apply_time=VALUES(apply_time),status=VALUES(status),inviter_id=VALUES(inviter_id),operator_id=VALUES(operator_id)
+    </insert>
+
+    <insert id="applyUpsert" parameterType="GrpApplication">
+        INSERT INTO grpapplications (app_key,apply_type,group_id,sponsor_id,recipient_id,inviter_id,operator_id,apply_time,status)
+        VALUES (#{appkey},1,#{groupId},#{sponsorId},#{recipientId},#{inviterId},#{operatorId},#{applyTime},#{status})
+        ON DUPLICATE KEY UPDATE apply_time=VALUES(apply_time),status=VALUES(status),inviter_id=VALUES(inviter_id),operator_id=VALUES(operator_id)
+    </insert>
+
+    <select id="queryMyGrpApplications" resultMap="BaseResultMap">
+        SELECT * FROM grpapplications WHERE app_key=#{appkey} AND apply_type=1 AND sponsor_id=#{sponsorId} AND 
+        <if test="isPositive">
+            apply_time &gt; #{startTime}
+            ORDER BY apply_time ASC
+        </if>
+        <if test="!isPositive">
+            apply_time &lt; #{startTime}
+            ORDER BY apply_time DESC
+        </if>
+        LIMIT #{count}
+    </select>
+
+    <select id="queryMyPendingGrpInvitations" resultMap="BaseResultMap">
+        SELECT * FROM grpapplications WHERE app_key=#{appkey} AND apply_type=0 AND recipient_id=#{recipientId} AND 
+        <if test="isPositive">
+            apply_time &gt; #{startTime}
+            ORDER BY apply_time ASC
+        </if>
+        <if test="!isPositive">
+            apply_time &lt; #{startTime}
+            ORDER BY apply_time DESC
+        </if>
+        LIMIT #{count}
+    </select>
+
+    <select id="queryGrpInvitations" resultMap="BaseResultMap">
+        SELECT * FROM grpapplications WHERE app_key=#{appkey} AND apply_type=0 AND group_id=#{groupId} AND 
+        <if test="isPositive">
+            apply_time &gt; #{startTime}
+            ORDER BY apply_time ASC
+        </if>
+        <if test="!isPositive">
+            apply_time &lt; #{startTime}
+            ORDER BY apply_time DESC
+        </if>
+        LIMIT #{count}
+    </select>
+
+    <select id="queryGrpPendingApplications" resultMap="BaseResultMap">
+        SELECT * FROM grpapplications WHERE app_key=#{appkey} AND apply_type=1 AND group_id=#{groupId} AND 
+        <if test="isPositive">
+            apply_time &gt; #{startTime}
+            ORDER BY apply_time ASC
+        </if>
+        <if test="!isPositive">
+            apply_time &lt; #{startTime}
+            ORDER BY apply_time DESC
+        </if>
+        LIMIT #{count}
+    </select>
+</mapper>

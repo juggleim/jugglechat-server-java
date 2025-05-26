@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.FriendApplicationMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.FriendApplication">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="recipient_id" property="recipientId" jdbcType="VARCHAR"/>
+        <result column="sponsor_id" property="sponsorId" jdbcType="VARCHAR"/>
+        <result column="apply_time" property="applyTime" jdbcType="BIGINT"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="upsert" parameterType="FriendApplication">
+        INSERT INTO friendapplications (app_key,recipient_id, sponsor_id, apply_time, status)
+        VALUES (#{appkey}, #{recipientId}, #{sponsorId}, #{applyTime}, #{status})
+    </insert>
+
+    <select id="queryPendingApplications" resultMap="BaseResultMap">
+        SELECT * FROM friendapplications 
+        WHERE app_key = #{appkey} AND recipient_id = #{recipientId}
+        <if test="isPositive">
+            AND apply_time &gt; #{startTime}
+            ORDER BY apply_time ASC
+        </if>
+        <if test="!isPositive">
+            AND apply_time &lt; #{startTime}
+            ORDER BY apply_time DESC
+        </if>
+        LIMIT #{count}
+    </select>
+
+    <select id="queryMyApplications" resultMap="BaseResultMap">
+        SELECT * FROM friendapplications 
+        WHERE app_key = #{appkey} AND sponsor_id = #{sponsorId}
+        <if test="isPositive">
+            AND apply_time &gt; #{startTime}
+            ORDER BY apply_time ASC
+        </if>
+        <if test="!isPositive">
+            AND apply_time &lt; #{startTime}
+            ORDER BY apply_time DESC
+        </if>
+        LIMIT #{count}
+    </select>
+
+    <select id="queryApplications" resultMap="BaseResultMap">
+        SELECT * FROM friendapplications 
+        WHERE app_key = #{appkey} AND (sponsor_id = #{userId} OR recipient_id = #{userId})
+        <if test="isPositive">
+            AND apply_time &gt; #{startTime}
+            ORDER BY apply_time ASC
+        </if>
+        <if test="!isPositive">
+            AND apply_time &lt; #{startTime}
+            ORDER BY apply_time DESC
+        </if>
+        LIMIT #{count}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE friendapplications 
+        SET status = #{status}
+        WHERE app_key = #{appkey} AND sponsor_id = #{sponsorId} AND recipient_id = #{recipientId}
+    </update>
+</mapper>

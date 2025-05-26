@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.PostMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.Post">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="post_id" property="postId" jdbcType="VARCHAR"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="BLOB"/>
+        <result column="content_brief" property="contentBrief" jdbcType="VARCHAR"/>
+        <result column="post_exset" property="postExset" jdbcType="BLOB"/>
+        <result column="is_delete" property="isDelete" jdbcType="TINYINT"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="BIGINT"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="create" parameterType="Post">
+        INSERT INTO posts (post_id,title,content,content_brief,post_exset,is_delete,user_id,created_time,status,app_key)
+        VALUES (#{postId},#{title},#{cotnent},#{contentBrief},#{postExset},#{isDelete},#{userId},#{createdTime},#{status},#{appkey})
+    </insert>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM posts WHERE app_key=#{appkey} AND post_id=#{postId}
+    </select>
+
+    <select id="findByIds" resultMap="BaseResultMap">
+        SELECT * FROM posts WHERE app_key=#{appkey} AND post_id IN 
+        <foreach collection="postIds" item="postId" open="(" separator="," close=")">
+            #{postId}
+        </foreach>
+    </select>
+
+    <select id="qryPosts" resultMap="BaseResultMap">
+        SELECT * FROM posts WHERE app_key=#{appkey} AND 
+        <if test="isPositive">
+            created_time &gt; #{startTime} 
+            ORDER BY created_time asc
+        </if>
+        <if test="!isPositive">
+            created_time &lt; #{startTime}
+            ORDER BY created_time desc
+        </if>
+        LIMIT #{limit}
+    </select>
+</mapper>

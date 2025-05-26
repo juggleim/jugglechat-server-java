@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.GroupMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.Group">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="group_id" property="groupId" jdbcType="VARCHAR"/>
+        <result column="group_name" property="groupName" jdbcType="VARCHAR"/>
+        <result column="group_portrait" property="groupPortrait" jdbcType="VARCHAR"/>
+        <result column="creator_id" property="creatorId" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+        <result column="is_mute" property="isMute" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <insert id="create" parameterType="Group">
+        INSERT INTO groupinfos (group_id, group_name, group_portrait, creator_id, app_key, is_mute)
+        VALUES
+        (#{groupId}, #{groupName}, #{groupPortrait}, #{creatorId}, #{appkey}, #{isMute})
+    </insert>
+
+    <select id="isExist" resultType="boolean">
+        SELECT COUNT(1) &gt; 0 FROM groupinfos WHERE app_key = #{appkey} AND group_id = #{groupId}
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM groupinfos WHERE app_key = #{appkey} AND group_id = #{groupId}
+    </select>
+
+    <delete id="delete">
+        DELETE FROM groupinfos WHERE app_key=#{appkey} AND group_id = #{groupId}
+    </delete>
+
+    <update id="updateGroupMuteStatus">
+        UPDATE groupinfos
+        SET is_mute = #{isMute}
+        WHERE app_key = #{appkey} AND group_id = #{groupId}
+    </update>
+
+    <update id="updateGrpName">
+        UPDATE groupinfos
+        SET group_name = #{groupName}, group_portrait = #{groupPortrait}
+        WHERE app_key = #{appkey} AND group_id = #{groupId}
+    </update>
+
+    <update id="updatecreatorId">
+        UPDATE groupinfos
+        SET creator_id = #{creatorId}
+        WHERE app_key = #{appkey} AND group_id = #{groupId}
+    </update>
+</mapper>

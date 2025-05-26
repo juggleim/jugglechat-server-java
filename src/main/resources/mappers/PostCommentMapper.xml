@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.PostCommentMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.PostComment">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="comment_id" property="commentId" jdbcType="VARCHAR"/>
+        <result column="post_id" property="postId" jdbcType="VARCHAR"/>
+        <result column="parent_comment_id" property="parentCommentId" jdbcType="VARCHAR"/>
+        <result column="parent_user_id" property="parentUserId" jdbcType="VARCHAR"/>
+        <result column="text" property="text" jdbcType="VARCHAR"/>
+        <result column="is_delete" property="isDelete" jdbcType="TINYINT"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="BIGINT"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="create" parameterType="PostComment">
+        INSERT INTO postcomments (comment_id,post_id,parent_comment_id,parent_user_id,text,is_delete,user_id,created_time,status,app_key)
+        VALUES (#{comment_id},#{postId},#{parentCommentId},#{parentUserId},#{text},#{isDelete},#{userId},#{createdTime},#{status},#{appkey})
+    </insert>
+
+    <select id="findByIds" resultMap="BaseResultMap">
+        SELECT * FROM postcomments WHERE app_key=#{appkey} AND comment_id IN 
+        <foreach collection="commentIds" item="commentId" open="(" separator="," close=")">
+            #{commentId}
+        </foreach>
+    </select>
+
+    <select id="qryPostComments" resultMap="BaseResultMap">
+        SELECT * FROM postcomments WHERE app_key=#{appkey} AND post_id=#{postId} AND 
+        <if test="isPositive">
+            created_time &gt; #{startTime} 
+            ORDER BY created_time asc
+        </if>
+        <if test="!isPositive">
+            created_time &lt; #{startTime}
+            ORDER BY created_time desc
+        </if>
+        LIMIT #{limit}
+    </select>
+</mapper>

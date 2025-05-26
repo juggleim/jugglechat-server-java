@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.GroupMemberMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.GroupMember">
+        <id column="id" property="id" jdbcType="INTEGER"/>
+        <result column="group_id" property="groupId" jdbcType="VARCHAR"/>
+        <result column="member_id" property="memberId" jdbcType="VARCHAR"/>
+        <result column="member_type" property="memberType" jdbcType="TINYINT"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+        <result column="is_mute" property="isMute" jdbcType="TINYINT"/>
+        <result column="is_allow" property="isAllow" jdbcType="TINYINT"/>
+        <result column="mute_end_at" property="muteEndAt" jdbcType="BIGINT"/>
+        <result column="grp_display_name" property="grpDisplayName" jdbcType="VARCHAR"/>
+    </resultMap>
+    <resultMap id="BaseResultMapWithUser" type="GroupMemberWithUser" extends="BaseResultMap">
+        <result column="nickname" property="nickname" jdbcType="VARCHAR"/>
+        <result column="user_portrait" property="userPortrait" jdbcType="VARCHAR"/>
+    </resultMap>
+    <resultMap id="BaseResultMapWithGroup" type="GroupMemberWithGroup" extends="BaseResultMap">
+        <result column="group_name" property="groupName" jdbcType="VARCHAR"/>
+        <result column="group_portrait" property="groupPortrait" jdbcType="VARCHAR"/>
+    </resultMap>
+
+
+    <insert id="create" parameterType="GroupMember">
+        INSERT INTO groupmembers (group_id,member_id,member_type,app_key,is_mute,is_allow,mute_end_at,grp_display_name)
+        VALUES (#{groupId},#{memberId},#{memberType},#{appkey},#{isMute},#{isAllow},#{muteEndAt},#{grpDisplayName})
+    </insert>
+
+    <insert id="batchCreate">
+        INSERT INTO groupmembers (group_id,member_id,member_type,app_key,is_mute,is_allow,mute_end_at,grp_display_name)
+        VALUES
+        <foreach collection="grpMembers" item="member" separator=",">
+            (#{member.groupId}, #{member.memberId}, #{member.memberType}, #{member.appkey}, #{member.isMute}, #{member.isAllow}, #{member.muteEndAt}, #{member.grpDisplayName})
+        </foreach>
+    </insert>
+
+    <select id="find" resultMap="BaseResultMap">
+        SELECT * FROM groupmembers WHERE app_key=#{appkey} and group_id=#{groupId} AND member_id=#{memberId}
+    </select>
+
+    <select id="findByMemberIds" resultMap="BaseResultMap">
+        SELECT * FROM groupmembers WHERE app_key=#{appkey} AND group_id=#{groupId} AND member_id IN
+        <foreach item="memberId" collection="memberIds" open="(" separator="," close=")">
+            #{memberId}
+        </foreach>
+    </select>
+
+    <select id="queryMembers" resultMap="BaseResultMapWithUser">
+        SELECT m.*,u.nickname,u.user_portrait from groupmembers as m left join users as u on m.app_key=u.app_key and m.member_id=u.user_id
+        WHERE m.app_key=#{appkey} AND m.group_id=#{groupId} AND m.id &gt; #{startId}
+        ORDER BY m.id ASC LIMIT #{limit}
+    </select>
+
+    <select id="queryGroupsByMemberId" resultMap="BaseResultMapWithGroup">
+        SELECT m.*,g.group_name,g.group_portrait FROM groupmembers AS m left join groupinfos as g on m.app_key=g.app_key AND m.group_id=g.group_id
+        WHERE m.app_key=#{appkey} AND m.member_id=#{memberId} AND m.id &gt; #{startId}
+        ORDER BY m.id ASC LIMIT #{limit}
+    </select>
+
+    <delete id="batchDelete">
+        DELETE FROM groupmembers WHERE app_key=#{appkey} AND group_id=#{groupId} AND member_id IN
+        <foreach collection="memberIds" item="memberId" open="(" separator="," close=")">
+            #{memberId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByGroupId">
+        DELETE FROM groupmembers WHERE app_key=#{appkey} AND group_id=#{groupId}
+    </delete>
+
+    <update id="updateMute">
+        UPDATE groupmembers 
+        SET is_mute=#{isMute}
+        <if test="isMute == 0">
+            ,mute_end_at=0
+        </if>
+        <if test="isMute != 0">
+            ,mute_end_at=#{muteEndAt}
+        </if>
+        WHERE app_key=#{appkey} AND group_id=#{groupId} AND member_id IN 
+        <foreach collection="memberIds" item="memberId" open="(" separator="," close=")">
+            #{memberId}
+        </foreach>
+    </update>
+
+    <update id="updateAllow">
+        UPDATE groupmembers 
+        SET is_allow=#{isAllow}
+        WHERE app_key=#{appkey} AND group_id=#{groupId} AND member_id IN 
+        <foreach collection="memberIds" item="memberId" open="(" separator="," close=")">
+            #{memberId}
+        </foreach>
+    </update>
+
+    <select id="countByGroup" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM groupmembers WHERE app_key=#{appkey} AND group_id=#{groupId}
+    </select>
+
+    <update id="updateGrpDisplayName">
+        UPDATE groupmembers
+        SET grp_display_name=#{grpDisplayName}
+        WHERE app_key=#{appkey} AND group_id=#{groupId} AND member_id=#{memberId}
+    </update>
+</mapper>

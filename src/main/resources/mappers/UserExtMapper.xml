@@ -23,6 +23,7 @@
         <foreach collection="exts" item="ext" separator=",">
             (#{ext.appkey},#{ext.userId},#{ext.itemKey},#{ext.itemValue},#{ext.itemType})
         </foreach>
+        ON DUPLICATE KEY UPDATE item_value=VALUES(item_value)
     </insert>
 
     <delete id="batchDelete">

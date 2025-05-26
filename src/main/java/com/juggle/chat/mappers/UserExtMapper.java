@@ -14,5 +14,5 @@ public interface UserExtMapper {
 
     List<UserExt> qryExtFields(@Param("appkey")String appkey, @Param("userId")String userId);
     List<UserExt> qryExtFieldsByItemKeys(@Param("appkey")String appkey,@Param("userId") String userId, @Param("itemKeys")List<String> itemKeys);
-    List<UserExt> qryExtsBaseItemKey(@Param("appkey")String appkey, @Param("itemKey")String itemKey, @Param("startId")Long startId, @Param("limit")Long limit);
+    List<UserExt> qryExtsBaseItemKey(@Param("appkey")String appkey, @Param("itemKey")String itemKey, @Param("startId")long startId, @Param("limit")long limit);
 }
