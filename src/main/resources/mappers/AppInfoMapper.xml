@@ -15,16 +15,16 @@
     </resultMap>
 
     <insert id="create" parameterType="AppInfo">
-        INSERT INTO appinfos (app_key, app_name, app_secret, app_secure_key, app_type)
+        INSERT INTO apps (app_key, app_name, app_secret, app_secure_key, app_type)
         VALUES (#{appkey}, #{appName}, #{appSecret}, #{appSecureKey}, #{appType})
     </insert>
 
     <insert id="upsert" parameterType="AppInfo">
-        INSERT INTO appinfos (app_key, app_name, app_secret, app_secure_key, app_type)
+        INSERT INTO apps (app_key, app_name, app_secret, app_secure_key, app_type)
         VALUES (#{appkey}, #{appName}, #{appSecret}, #{appSecureKey}, #{appType})
     </insert>
 
     <select id="findByAppkey" resultMap="BaseResultMap">
-        SELECT * FROM appinfos WHERE app_key = #{appkey}
+        SELECT * FROM apps WHERE app_key = #{appkey}
     </select>
 </mapper>

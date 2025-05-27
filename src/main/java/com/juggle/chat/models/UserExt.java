@@ -12,4 +12,14 @@ public class UserExt {
     private Integer itemType;
     private Timestamp updatedTime;
     private String appkey;
+
+    public UserExt(){}
+
+    public UserExt(String appkey, String userId, String itemKey, String itemValue, Integer itemType){
+        this.appkey = appkey;
+        this.userId = userId;
+        this.itemKey = itemKey;
+        this.itemValue = itemValue;
+        this.itemType = itemType;
+    }
 }

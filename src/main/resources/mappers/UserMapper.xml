@@ -45,8 +45,8 @@
     </insert>
 
     <insert id="upsert" parameterType="User">
-        INSERT INTO users (app_key,user_id,user_type,nickname,user_portrait)
-        VALUES (#{appkey}, #{userId}, #{userType}, #{nickname},#{userPortrait})  ON DUPLICATE KEY UPDATE nickname=VALUES(nickname),user_portrait=VALUES(user_portrait)
+        INSERT INTO users (app_key,user_id,user_type,nickname,user_portrait,phone,email)
+        VALUES (#{appkey}, #{userId}, #{userType}, #{nickname},#{userPortrait},#{phone},#{email})  ON DUPLICATE KEY UPDATE nickname=VALUES(nickname),user_portrait=VALUES(user_portrait)
     </insert>
 
     <update id="update" parameterType="User">

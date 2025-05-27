@@ -12,10 +12,18 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
-        Map<String, String> errorMap = new HashMap<>();
-        errorMap.put("error", "Internal Server Error");
-        errorMap.put("message", ex.getMessage());
-        return new ResponseEntity<>(errorMap, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        if(ex instanceof JimException) {
+            JimException jimEx = (JimException) ex;
+            Map<String, Object> errorMap = new HashMap<>();
+            errorMap.put("code", jimEx.getCode());
+            errorMap.put("msg", jimEx.getMsg());
+            return new ResponseEntity<>(errorMap, HttpStatus.OK);
+        }else{
+            Map<String, Object> errorMap = new HashMap<>();
+            errorMap.put("code",500);
+            errorMap.put("msg", ex.getMessage());
+            return new ResponseEntity<>(errorMap, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
