@@ -26,4 +26,8 @@ public class CommonUtil {
     public static final String int2String(int n){
         return String.valueOf(n);
     }
+
+    public static final int string2Int(String a){
+        return Integer.parseInt(a);
+    }
 }
