@@ -14,9 +14,7 @@ import com.juggle.chat.apimodels.Result;
 import com.juggle.chat.apimodels.SmsLoginReq;
 import com.juggle.chat.exceptions.JimErrorCode;
 import com.juggle.chat.exceptions.JimException;
-import com.juggle.chat.interceptors.RequestContext;
 import com.juggle.chat.services.LoginService;
-import com.juggle.chat.utils.CommonUtil;
 
 @RestController
 @RequestMapping("/jim")
@@ -27,7 +25,7 @@ public class LoginController {
 
     @PostMapping("/login")
     public Result login(@RequestBody LoginReq req)throws JimException{
-        throw new JimException(1, "abc");
+        throw new JimException(1, "");
         // return new Result(0, "succ");
     }
 
@@ -69,6 +67,4 @@ public class LoginController {
     public Result confirmQrCode(){
         return new Result(0, "succ");
     }
-
-
 }

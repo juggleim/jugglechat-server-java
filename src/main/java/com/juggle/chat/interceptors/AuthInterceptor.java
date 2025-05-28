@@ -68,7 +68,12 @@ public class AuthInterceptor implements HandlerInterceptor{
 
             if(tokenStr.startsWith("Bearer ")){
                 tokenStr = tokenStr.substring(7);
-                if(!ApiKeyService.checkApiKey(tokenStr, appkey, appInfo.getAppSecureKey())){
+                boolean succ = false;
+                try {
+                    succ = ApiKeyService.checkApiKey(tokenStr, appkey, appInfo.getAppSecureKey());
+                } catch (Exception e) {
+                }
+                if(!succ){
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     return false;
                 }
