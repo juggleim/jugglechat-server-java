@@ -10,6 +10,7 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import com.google.protobuf.ServiceException;
+import com.juggle.chat.apimodels.GroupAdministrators;
 import com.juggle.chat.apimodels.GroupInfo;
 import com.juggle.chat.apimodels.GroupInviteResp;
 import com.juggle.chat.apimodels.GroupManagement;
@@ -24,12 +25,14 @@ import com.juggle.chat.mappers.GroupExtMapper;
 import com.juggle.chat.mappers.GroupMapper;
 import com.juggle.chat.mappers.GroupMemberMapper;
 import com.juggle.chat.mappers.GrpApplicationMapper;
+import com.juggle.chat.mappers.UserMapper;
 import com.juggle.chat.models.Group;
 import com.juggle.chat.models.GroupAdmin;
 import com.juggle.chat.models.GroupExt;
 import com.juggle.chat.models.GroupExtKeys;
 import com.juggle.chat.models.GroupMember;
 import com.juggle.chat.models.GrpApplication;
+import com.juggle.chat.models.User;
 import com.juggle.chat.models.UserExtKeys;
 import com.juggle.chat.utils.CommonUtil;
 import com.juggle.chat.utils.N3d;
@@ -46,7 +49,10 @@ public class GroupService {
     private GroupAdminMapper grpAdminMapper;
     @Resource 
     private UserService userService;
-    @Resource GrpApplicationMapper grpApplicationMapper;
+    @Resource 
+    private GrpApplicationMapper grpApplicationMapper;
+    @Resource
+    private UserMapper userMapper;
 
     public void createGroup(GroupInfo grpInfo)throws JimException{
         String appkey = RequestContext.getAppkeyFromCtx();
@@ -269,5 +275,98 @@ public class GroupService {
         }
 
         return resp;
+    }
+
+    public void ChgGroupOwner(String groupId, String newOwnerId)throws JimException{
+        String appkey = RequestContext.getAppkeyFromCtx();
+        //TODO check right
+        this.grpMapper.updateCreatorId(appkey, groupId, newOwnerId);
+        //TODO send notify
+    }
+
+    public void setGroupMute(String groupId, int isMute)throws JimException{
+        String appkey = RequestContext.getAppkeyFromCtx();
+        int succ = this.grpMapper.updateGroupMuteStatus(appkey, groupId, isMute);
+        if(succ>0){
+            //TODO sync to imserver
+        }
+    }
+
+    public void setGroupVerifyType(String groupId, int verifyType)throws JimException{
+        String appkey = RequestContext.getAppkeyFromCtx();
+        GroupExt grpExt = new GroupExt();
+        grpExt.setGroupId(groupId);
+        grpExt.setItemKey(GroupExtKeys.GrpExtKey_GrpVerifyType);
+        grpExt.setItemValue(CommonUtil.int2String(verifyType));
+        grpExt.setItemType(UserExtKeys.AttItemType_Setting);
+        grpExt.setAppkey(appkey);
+        this.grpExtMapper.upsert(grpExt);
+    }
+
+    public void setGroupHisMsgVisible(String groupId, int visible)throws JimException{
+        String appkey = RequestContext.getAppkeyFromCtx();
+        //TODO check right
+        int hidGrpMsg = 1;
+        if(visible>0){
+            hidGrpMsg = 0;
+        }else{
+            hidGrpMsg = 1;
+        }
+        GroupExt grpExt = new GroupExt();
+        grpExt.setGroupId(groupId);
+        grpExt.setItemKey(GroupExtKeys.GrpExtKey_HideGrpMsg);
+        grpExt.setItemValue(CommonUtil.int2String(hidGrpMsg));
+        grpExt.setItemType(UserExtKeys.AttItemType_Setting);
+        grpExt.setAppkey(appkey);
+        int succ = this.grpExtMapper.upsert(grpExt);
+        if(succ>0){
+            //TODO sync to imserver
+        }
+    }
+
+    public void addGroupAdmins(String groupId, List<String> adminIds)throws JimException{
+        String appkey = RequestContext.getAppkeyFromCtx();
+        for (String adminId : adminIds) {
+            GroupAdmin admin = new GroupAdmin();
+            admin.setGroupId(groupId);
+            admin.setAdminId(adminId);
+            admin.setAppkey(appkey);
+            this.grpAdminMapper.upsert(admin);
+        }
+    }
+
+    public void delGroupAdmins(String groupId, List<String> adminIds)throws JimException{
+        String appkey = RequestContext.getAppkeyFromCtx();
+        this.grpAdminMapper.batchDel(appkey, groupId, adminIds);
+    }
+
+    public GroupAdministrators qryGroupAdmins(String groupId)throws JimException{
+        GroupAdministrators ret = new GroupAdministrators();
+        ret.setGroupId(groupId);
+        ret.setItems(new ArrayList<>());
+        String appkey = RequestContext.getAppkeyFromCtx();
+        List<GroupAdmin> admins = this.grpAdminMapper.qryAdmins(appkey, groupId);
+        if(admins!=null&&admins.size()>0){
+            List<String> adminIds = new ArrayList<>();
+            Map<String,GroupMemberInfo> memberInfos = new HashMap<>();
+            for (GroupAdmin admin : admins) {
+                GroupMemberInfo memberInfo = new GroupMemberInfo();
+                memberInfo.setUserId(admin.getAdminId());
+                memberInfo.setRole(GroupMember.GrpMemberRole_GrpAdmin);
+                memberInfos.put(admin.getAdminId(), memberInfo);
+                adminIds.add(admin.getAdminId());
+                ret.getItems().add(memberInfo);
+            }
+            List<User> users = this.userMapper.findByUserIds(appkey, adminIds);
+            for (User user : users) {
+                GroupMemberInfo mInfo = memberInfos.get(user.getUserId());
+                if(mInfo!=null){
+                    mInfo.setNickname(user.getNickname());
+                    mInfo.setAvatar(user.getUserPortrait());
+                    mInfo.setMemberType(user.getUserType());
+                }
+            }
+        }
+        return ret;
     }
 }
