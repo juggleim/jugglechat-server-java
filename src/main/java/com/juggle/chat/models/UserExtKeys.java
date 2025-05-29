@@ -14,4 +14,8 @@ public class UserExtKeys {
     public static final int FriendVerifyType_NoNeed = 0;
     public static final int FriendVerifyType_Need = 1;
     public static final int FriendVerifyType_Decline = 2;
+
+    public static final int GrpVerifyType_NoNeedGrpVerify = 0;
+    public static final int GrpVerifyType_NeedGrpVerify = 1;
+    public static final int GrpVerifyType_DeclineGroup = 2;
 }

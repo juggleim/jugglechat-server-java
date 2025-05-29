@@ -36,27 +36,8 @@ public class FriendService {
     private FriendApplicationMapper friendApplicationMapper;
     @Resource 
     private UserService userService;
-
-    public boolean checkFriend(String userId, String friendId){
-        Map<String,Boolean> map = this.checkFriends(userId, List.of(friendId));
-        return map.get(friendId);
-    }
-
-    public Map<String,Boolean> checkFriends(String userId, List<String> friendIds){
-        Map<String,Boolean> ret = new HashMap<String,Boolean>();
-        if(friendIds!=null&&friendIds.size()>0){
-            for (String friendId : friendIds) {
-                ret.put(friendId, false);
-            }
-            List<FriendRel> rels = friendMapper.queryFriendRelsByFriendIds(RequestContext.getAppkeyFromCtx(),userId,friendIds);
-            if(rels!=null&&rels.size()>0){
-                for (FriendRel rel : rels) {
-                    ret.put(rel.getFriendId(), true);
-                }
-            }
-        }
-        return ret;
-    }
+    @Resource 
+    private FriendCheckService friendChaCheckService;
 
     public UserInfos qryFriendsWithPage(int page, int size, String orderTag)throws JimException{
         String appkey = RequestContext.getAppkeyFromCtx();
@@ -115,7 +96,7 @@ public class FriendService {
     public void applyFriend(String friendId){
         String appkey = RequestContext.getAppkeyFromCtx();
         String currentUserId = RequestContext.getCurrentUserIdFromCtx();
-        if(this.checkFriend(currentUserId, friendId)){
+        if(this.friendChaCheckService.checkFriend(currentUserId, friendId)){
             FriendRel rel = new FriendRel();
             rel.setAppkey(appkey);
             rel.setUserId(currentUserId);

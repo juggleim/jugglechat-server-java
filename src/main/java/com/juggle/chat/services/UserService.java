@@ -26,8 +26,10 @@ public class UserService {
     private UserMapper userMapper;
     @Resource 
     private UserExtMapper userExtMapper;
+    // @Resource
+    // private FriendService friendService;
     @Resource
-    private FriendService friendService;
+    private FriendCheckService friendCheckService;
 
     public UserInfo qryUserInfo(String userId){
         UserInfo user = this.getUserInfo(userId);
@@ -36,7 +38,7 @@ public class UserService {
             user.setSettings(this.getUserSettings(userId));
         }else{
             //check friend
-            user.setFriend(friendService.checkFriend(RequestContext.getCurrentUserIdFromCtx(), userId));
+            user.setFriend(friendCheckService.checkFriend(RequestContext.getCurrentUserIdFromCtx(), userId));
         }
         return user;
     }
@@ -112,7 +114,7 @@ public class UserService {
             userInfo.setNickname(u.getNickname());
             userInfo.setAvatar(u.getUserPortrait());
             userInfo.setUserType(u.getUserType());
-            userInfo.setFriend(this.friendService.checkFriend(RequestContext.getCurrentUserIdFromCtx(), u.getUserId()));
+            userInfo.setFriend(this.friendCheckService.checkFriend(RequestContext.getCurrentUserIdFromCtx(), u.getUserId()));
             users.addUserInf(userInfo);
         }
         return users;
