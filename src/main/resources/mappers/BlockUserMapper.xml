@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.BlockUserMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.BlockUser">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="nickname" property="nickname" jdbcType="VARCHAR"/>
+        <result column="user_portrait" property="userPortrait" jdbcType="VARCHAR"/>
+        <result column="user_type" property="userType" jdbcType="TINYINT"/>
+        <result column="pinyin" property="pinyin" jdbcType="VARCHAR"/>
+        <result column="block_user_id" property="blockUserId" jdbcType="VARCHAR"/>
+        <result column="created_time_ms" property="createdTime" jdbcType="BIGINT"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Select_Columns">
+        b.id,
+        b.user_id,
+        u.nickname,
+        u.user_portrait,
+        u.user_type,
+        u.pinyin,
+        b.block_user_id,
+        UNIX_TIMESTAMP(b.created_time) * 1000 AS created_time_ms,
+        b.app_key
+    </sql>
+
+    <insert id="create" parameterType="com.juggle.chat.models.BlockUser">
+        INSERT INTO blocks (app_key, user_id, block_user_id)
+        VALUES (#{appkey}, #{userId}, #{blockUserId})
+    </insert>
+
+    <delete id="delBlockUser">
+        DELETE FROM blocks
+        WHERE app_key = #{appkey}
+          AND user_id = #{userId}
+          AND block_user_id = #{blockUserId}
+    </delete>
+
+    <delete id="batchDelBlockUsers">
+        DELETE FROM blocks
+        WHERE app_key = #{appkey}
+          AND user_id = #{userId}
+          AND block_user_id IN
+          <foreach collection="blockUserIds" item="blockUserId" open="(" separator="," close=")">
+              #{blockUserId}
+          </foreach>
+    </delete>
+
+    <select id="find" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Select_Columns"/>
+        FROM blocks b
+        LEFT JOIN users u
+          ON b.app_key = u.app_key AND b.block_user_id = u.user_id
+        WHERE b.app_key = #{appkey}
+          AND b.user_id = #{userId}
+          AND b.block_user_id = #{blockUserId}
+    </select>
+
+    <select id="findBlockUserByIds" resultMap="BaseResultMap">
+        SELECT b.id,
+               b.user_id,
+               NULL AS nickname,
+               NULL AS user_portrait,
+               NULL AS user_type,
+               NULL AS pinyin,
+               b.block_user_id,
+               UNIX_TIMESTAMP(b.created_time) * 1000 AS created_time_ms,
+               b.app_key
+        FROM blocks b
+        WHERE b.app_key = #{appkey}
+          AND b.user_id = #{userId}
+          AND b.block_user_id IN
+          <foreach collection="blockUserIds" item="blockUserId" open="(" separator="," close=")">
+              #{blockUserId}
+          </foreach>
+        ORDER BY b.id ASC
+    </select>
+
+    <select id="qryBlockUsers" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Select_Columns"/>
+        FROM blocks b
+        LEFT JOIN users u
+          ON b.app_key = u.app_key AND b.block_user_id = u.user_id
+        WHERE b.app_key = #{appkey}
+          AND b.user_id = #{userId}
+          AND b.id &gt; #{startId}
+        ORDER BY b.id ASC
+        LIMIT #{limit}
+    </select>
+</mapper>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.ApplicationMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.Application">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="app_id" property="appId" jdbcType="VARCHAR"/>
+        <result column="app_name" property="appName" jdbcType="VARCHAR"/>
+        <result column="app_icon" property="appIcon" jdbcType="VARCHAR"/>
+        <result column="app_desc" property="appDesc" jdbcType="VARCHAR"/>
+        <result column="app_url" property="appUrl" jdbcType="VARCHAR"/>
+        <result column="app_order" property="appOrder" jdbcType="INTEGER"/>
+        <result column="created_time_ms" property="createdTime" jdbcType="BIGINT"/>
+        <result column="updated_time_ms" property="updatedTime" jdbcType="BIGINT"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,
+        app_id,
+        app_name,
+        app_icon,
+        app_desc,
+        app_url,
+        app_order,
+        UNIX_TIMESTAMP(created_time) * 1000 AS created_time_ms,
+        UNIX_TIMESTAMP(updated_time) * 1000 AS updated_time_ms,
+        app_key
+    </sql>
+
+    <insert id="create" parameterType="com.juggle.chat.models.Application">
+        INSERT INTO applications (app_key, app_id, app_name, app_icon, app_desc, app_url, app_order)
+        VALUES (#{appkey}, #{appId}, #{appName}, #{appIcon}, #{appDesc}, #{appUrl}, #{appOrder})
+    </insert>
+
+    <update id="update" parameterType="com.juggle.chat.models.Application">
+        UPDATE applications
+        SET app_name = #{appName},
+            app_icon = #{appIcon},
+            app_desc = #{appDesc},
+            app_url = #{appUrl},
+            app_order = #{appOrder}
+        WHERE app_key = #{appkey} AND app_id = #{appId}
+    </update>
+
+    <delete id="batchDelete">
+        DELETE FROM applications
+        WHERE app_key = #{appkey}
+          AND app_id IN
+          <foreach collection="appIds" item="appId" open="(" separator="," close=")">
+              #{appId}
+          </foreach>
+    </delete>
+
+    <select id="findByAppId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM applications
+        WHERE app_key = #{appkey} AND app_id = #{appId}
+    </select>
+
+    <select id="qryApplications" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM applications
+        WHERE app_key = #{appkey}
+        ORDER BY app_order DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="qryApplicationsByPage" resultMap="BaseResultMap">
+        <bind name="offset" value="(page-1)*size"/>
+        SELECT <include refid="Base_Column_List"/>
+        FROM applications
+        WHERE app_key = #{appkey}
+        ORDER BY app_order ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+</mapper>

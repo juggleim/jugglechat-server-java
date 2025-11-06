@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.BanUserMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.BanUser">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="end_time" property="endTime" jdbcType="BIGINT"/>
+        <result column="scope_key" property="scopeKey" jdbcType="VARCHAR"/>
+        <result column="scope_value" property="scopeValue" jdbcType="VARCHAR"/>
+        <result column="ext" property="ext" jdbcType="VARCHAR"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="upsert" parameterType="com.juggle.chat.models.BanUser">
+        INSERT INTO banusers (app_key, user_id, end_time, scope_key, scope_value, ext)
+        VALUES (#{appkey}, #{userId}, #{endTime}, #{scopeKey}, #{scopeValue}, #{ext})
+        ON DUPLICATE KEY UPDATE
+            end_time = VALUES(end_time),
+            scope_value = VALUES(scope_value),
+            ext = VALUES(ext)
+    </insert>
+
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT id, user_id, created_time, end_time, scope_key, scope_value, ext, app_key
+        FROM banusers
+        WHERE app_key = #{appkey} AND user_id = #{userId}
+        ORDER BY id ASC
+    </select>
+
+    <delete id="delBanUser">
+        DELETE FROM banusers
+        WHERE app_key = #{appkey}
+          AND user_id = #{userId}
+        <if test="scopeKey != null and scopeKey != ''">
+          AND scope_key = #{scopeKey}
+        </if>
+    </delete>
+
+    <delete id="cleanBaseTime">
+        DELETE FROM banusers
+        WHERE app_key = #{appkey}
+          AND user_id = #{userId}
+          AND end_time &gt; 0
+          AND end_time &lt; #{endTime}
+    </delete>
+
+    <select id="qryBanUsers" resultMap="BaseResultMap">
+        SELECT id, user_id, created_time, end_time, scope_key, scope_value, ext, app_key
+        FROM banusers
+        WHERE app_key = #{appkey}
+          AND (end_time = 0 OR end_time &gt; UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)
+          AND id &gt; #{startId}
+        ORDER BY id ASC
+        LIMIT #{limit}
+    </select>
+</mapper>

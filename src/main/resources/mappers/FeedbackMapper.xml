@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.FeedbackMapper">
+    <insert id="create" parameterType="com.juggle.chat.models.Feedback">
+        INSERT INTO feedbacks (app_key, user_id, category, content)
+        VALUES (#{appkey}, #{userId}, #{category}, #{content})
+    </insert>
+</mapper>

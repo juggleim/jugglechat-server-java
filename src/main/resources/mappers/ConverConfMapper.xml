@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.juggle.chat.mappers.ConverConfMapper">
+    <resultMap id="BaseResultMap" type="com.juggle.chat.models.ConverConf">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="conver_id" property="converId" jdbcType="VARCHAR"/>
+        <result column="conver_type" property="converType" jdbcType="INTEGER"/>
+        <result column="sub_channel" property="subChannel" jdbcType="VARCHAR"/>
+        <result column="item_key" property="itemKey" jdbcType="VARCHAR"/>
+        <result column="item_value" property="itemValue" jdbcType="VARCHAR"/>
+        <result column="item_type" property="itemType" jdbcType="INTEGER"/>
+        <result column="app_key" property="appkey" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <insert id="upsert" parameterType="com.juggle.chat.models.ConverConf">
+        INSERT INTO converconfs (app_key, conver_id, conver_type, sub_channel, item_key, item_value, item_type)
+        VALUES (#{appkey}, #{converId}, #{converType}, #{subChannel}, #{itemKey}, #{itemValue}, #{itemType})
+        ON DUPLICATE KEY UPDATE item_value = VALUES(item_value)
+    </insert>
+
+    <insert id="batchUpsert">
+        INSERT INTO converconfs (app_key, conver_id, conver_type, sub_channel, item_key, item_value, item_type)
+        VALUES
+        <foreach collection="items" item="item" separator=",">
+            (#{item.appkey}, #{item.converId}, #{item.converType}, #{item.subChannel}, #{item.itemKey}, #{item.itemValue}, #{item.itemType})
+        </foreach>
+        ON DUPLICATE KEY UPDATE item_value = VALUES(item_value)
+    </insert>
+
+    <select id="qryConverConfs" resultMap="BaseResultMap">
+        SELECT id, conver_id, conver_type, sub_channel, item_key, item_value, item_type, app_key
+        FROM converconfs
+        WHERE app_key = #{appkey}
+          AND conver_id = #{converId}
+          AND conver_type = #{converType}
+          AND sub_channel = #{subChannel}
+        ORDER BY id ASC
+    </select>
+</mapper>
