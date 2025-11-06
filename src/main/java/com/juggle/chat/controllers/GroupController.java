@@ -18,11 +18,18 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
+import com.juggle.chat.apimodels.CheckGroupMembersReq;
+import com.juggle.chat.apimodels.GroupAnnouncement;
+import com.juggle.chat.apimodels.GroupConfirm;
 import com.juggle.chat.apimodels.GroupInfo;
 import com.juggle.chat.apimodels.GroupInvite;
 import com.juggle.chat.apimodels.GroupInviteResp;
+import com.juggle.chat.apimodels.GroupMembersReq;
 import com.juggle.chat.apimodels.QrCode;
 import com.juggle.chat.apimodels.Result;
+import com.juggle.chat.apimodels.SearchGroupMembersReq;
+import com.juggle.chat.apimodels.SearchReq;
+import com.juggle.chat.apimodels.SetGroupDisplayNameReq;
 import com.juggle.chat.exceptions.JimErrorCode;
 import com.juggle.chat.exceptions.JimException;
 import com.juggle.chat.interceptors.RequestContext;
@@ -116,67 +123,103 @@ public class GroupController {
     }
 
     @PostMapping("/quit")
-    public Result quitGroup(){
+    public Result quitGroup(@RequestBody GroupInfo grpInfo){
         return new Result(0, "");
     }
 
     @PostMapping("/members/add")
-    public Result addGrpMembers(){
+    public Result addGrpMembers(@RequestBody GroupMembersReq req){
         return new Result(0, "");
     }
 
     @PostMapping("/members/del")
-    public Result delGrpMembers(){
+    public Result delGrpMembers(@RequestBody GroupMembersReq req){
         return new Result(0, "");
     }
 
     @GetMapping("/members/list")
-    public Result qryGrpMembers(){
+    public Result qryGrpMembers(@RequestParam("group_id") String groupId,
+            @RequestParam(value = "offset", required = false) String offset,
+            @RequestParam(value = "limit", required = false) Integer limit){
         return new Result(0, "");
     }
 
     @PostMapping("/members/check")
-    public Result checkGroupMembers(){
+    public Result checkGroupMembers(@RequestBody CheckGroupMembersReq req){
+        return new Result(0, "");
+    }
+
+    @PostMapping("/members/search")
+    public Result searchGroupMembers(@RequestBody SearchGroupMembersReq req){
         return new Result(0, "");
     }
 
     @PostMapping("/setgrpannouncement")
-    public Result setGrpAnnouncement(){
+    public Result setGrpAnnouncement(@RequestBody GroupAnnouncement announcement){
         return new Result(0, "");
     }
 
     @GetMapping("/getgrpannouncement")
-    public Result getGrpAnnouncement(){
+    public Result getGrpAnnouncement(@RequestParam("group_id") String groupId){
         return new Result(0, "");
     }
 
     @PostMapping("/setdisplayname")
-    public Result setGrpDisplayName(){
+    public Result setGrpDisplayName(@RequestBody SetGroupDisplayNameReq req){
         return new Result(0, "");
     }
 
     @GetMapping("/mygroups")
-    public Result qryMyGroups(){
+    public Result qryMyGroups(@RequestParam(value = "offset", required = false) String offset,
+            @RequestParam(value = "count", required = false) Integer count){
+        return new Result(0, "");
+    }
+
+    @PostMapping("/mygroups/search")
+    public Result searchMyGroups(@RequestBody SearchReq req){
         return new Result(0, "");
     }
 
     @GetMapping("/myapplications")
-    public Result qryMyGrpApplications(){
+    public Result qryMyGrpApplications(@RequestParam("start") long start,
+            @RequestParam(value = "count", required = false) Integer count,
+            @RequestParam(value = "order", required = false) Integer order){
         return new Result(0, "");
     }
 
     @GetMapping("/mypendinginvitations")
-    public Result qryMyPendingGrpInvitations(){
+    public Result qryMyPendingGrpInvitations(@RequestParam("start") long start,
+            @RequestParam(value = "count", required = false) Integer count,
+            @RequestParam(value = "order", required = false) Integer order){
         return new Result(0, "");
     }
 
     @GetMapping("/grpinvitations")
-    public Result qryGrpInvitations(){
+    public Result qryGrpInvitations(@RequestParam("group_id") String groupId,
+            @RequestParam("start") long start,
+            @RequestParam(value = "count", required = false) Integer count,
+            @RequestParam(value = "order", required = false) Integer order){
         return new Result(0, "");
     }
-    
+
     @GetMapping("/grppendingapplications")
-    public Result qryGrpPendingApplications(){
+    public Result qryGrpPendingApplications(@RequestParam("group_id") String groupId,
+            @RequestParam("start") long start,
+            @RequestParam(value = "count", required = false) Integer count,
+            @RequestParam(value = "order", required = false) Integer order){
+        return new Result(0, "");
+    }
+
+    @GetMapping("/grpapplications")
+    public Result qryGrpApplications(@RequestParam("group_id") String groupId,
+            @RequestParam("start") long start,
+            @RequestParam(value = "count", required = false) Integer count,
+            @RequestParam(value = "order", required = false) Integer order){
+        return new Result(0, "");
+    }
+
+    @PostMapping("/grpapplications/confirm")
+    public Result groupConfirm(@RequestBody GroupConfirm confirm){
         return new Result(0, "");
     }
 }

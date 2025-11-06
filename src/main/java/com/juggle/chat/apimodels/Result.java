@@ -37,8 +37,4 @@ public class Result {
     public static Result success(Object data){
         return new Result(JimErrorCode.SUCCESS, "success", data);
     }
-
-    public static Result success(){
-        return new Result(JimErrorCode.SUCCESS, "success", "");
-    }
 }

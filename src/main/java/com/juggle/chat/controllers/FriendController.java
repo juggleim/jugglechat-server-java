@@ -16,6 +16,7 @@ import com.juggle.chat.apimodels.Friend;
 import com.juggle.chat.apimodels.FriendIds;
 import com.juggle.chat.apimodels.Result;
 import com.juggle.chat.apimodels.UserInfos;
+import com.juggle.chat.apimodels.SearchFriendsReq;
 import com.juggle.chat.exceptions.JimErrorCode;
 import com.juggle.chat.exceptions.JimException;
 import com.juggle.chat.services.FriendService;
@@ -40,6 +41,11 @@ public class FriendController {
         FriendIds friendIds = new FriendIds();
         friendIds.setFriendIds(List.of(friend.getFriendId()));
         this.friendService.addFriends(friendIds);
+        return new Result(0, "");
+    }
+
+    @PostMapping("/search")
+    public Result searchFriends(@RequestBody SearchFriendsReq req){
         return new Result(0, "");
     }
 

@@ -10,8 +10,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.juggle.chat.apimodels.LoginReq;
 import com.juggle.chat.apimodels.LoginUserResp;
+import com.juggle.chat.apimodels.QrCodeReq;
 import com.juggle.chat.apimodels.Result;
+import com.juggle.chat.apimodels.RegisterReq;
 import com.juggle.chat.apimodels.SmsLoginReq;
+import com.juggle.chat.apimodels.EmailLoginReq;
 import com.juggle.chat.exceptions.JimErrorCode;
 import com.juggle.chat.exceptions.JimException;
 import com.juggle.chat.services.LoginService;
@@ -24,24 +27,28 @@ public class LoginController {
 
 
     @PostMapping("/login")
-    public Result login(@RequestBody LoginReq req)throws JimException{
-        throw new JimException(1, "");
-        // return new Result(0, "succ");
+    public Result login(@RequestBody LoginReq req) throws JimException {
+        return new Result(0, "");
+    }
+
+    @PostMapping("/register")
+    public Result register(@RequestBody RegisterReq req) {
+        return new Result(0, "");
     }
 
     @GetMapping("/login/qrcode")
-    public Result generateQrCode(){
-        return new Result(0,"succ");
+    public Result generateQrCode() {
+        return new Result(0, "");
     }
 
     @PostMapping("/login/qrcode/check")
-    public Result checkQrCode(){
-        return new Result(0,"succ");
+    public Result checkQrCode(@RequestBody QrCodeReq req) {
+        return new Result(0, "");
     }
 
     @PostMapping("/sms/send")
-    public Result smsSend(){
-        return new Result(0, "succ");
+    public Result smsSend(@RequestBody SmsLoginReq req) {
+        return new Result(0, "");
     }
 
     @PostMapping(value = {"/sms/login","/sms_login"})
@@ -54,17 +61,17 @@ public class LoginController {
     }
 
     @PostMapping("/email/send")
-    public Result emailSend(){
-        return new Result(0, "succ");
+    public Result emailSend(@RequestBody EmailLoginReq req) {
+        return new Result(0, "");
     }
 
     @PostMapping("/email/login")
-    public Result emailLogin(){
-        return new Result(0, "succ");
+    public Result emailLogin(@RequestBody EmailLoginReq req) {
+        return new Result(0, "");
     }
 
     @PostMapping("/login/qrcode/confirm")
-    public Result confirmQrCode(){
-        return new Result(0, "succ");
+    public Result confirmQrCode(@RequestBody QrCodeReq req) {
+        return new Result(0, "");
     }
 }
