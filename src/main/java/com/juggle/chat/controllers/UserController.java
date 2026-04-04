@@ -22,6 +22,7 @@ import com.juggle.chat.apimodels.QrCode;
 import com.juggle.chat.apimodels.Result;
 import com.juggle.chat.apimodels.UserInfo;
 import com.juggle.chat.apimodels.UserSettings;
+import com.juggle.chat.exceptions.JimErrorCode;
 import com.juggle.chat.exceptions.JimException;
 import com.juggle.chat.interceptors.RequestContext;
 import com.juggle.chat.services.UserService;
@@ -47,8 +48,10 @@ public class UserController {
 
     @PostMapping("/search")
     public Result searchByPhone(@RequestBody UserInfo user)throws JimException{
-        
-        return new Result(0, "");
+        if (user == null || user.getPhone() == null || user.getPhone().isEmpty()) {
+            throw new JimException(JimErrorCode.ErrorCode_APP_REQ_BODY_ILLEGAL);
+        }
+        return Result.success(this.userService.searchByPhone(user.getPhone()));
     }
 
     @GetMapping("/info")

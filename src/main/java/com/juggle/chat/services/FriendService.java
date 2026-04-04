@@ -1,9 +1,9 @@
 package com.juggle.chat.services;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Resource;
 
@@ -25,6 +25,7 @@ import com.juggle.chat.models.FriendApplication;
 import com.juggle.chat.models.FriendRel;
 import com.juggle.chat.models.User;
 import com.juggle.chat.models.UserExtKeys;
+import com.juggle.im.JuggleIm;
 
 @Service
 public class FriendService {
@@ -81,13 +82,14 @@ public class FriendService {
             rels.add(rel);
 
             FriendRel rel2 = new FriendRel();
-            rel.setAppkey(appkey);
-            rel.setUserId(friendId);
-            rel.setFriendId(currentUserId);
+            rel2.setAppkey(appkey);
+            rel2.setUserId(friendId);
+            rel2.setFriendId(currentUserId);
             rels.add(rel2);
             int ok = this.friendMapper.batchUpsert(rels);
             if(ok>0){
-                //TODO sync to imserver
+                this.syncAddFriend(appkey, currentUserId, friendId);
+                this.syncAddFriend(appkey, friendId, currentUserId);
                 //TODO send notify msg
             }
         }
@@ -102,7 +104,7 @@ public class FriendService {
             rel.setUserId(currentUserId);
             rel.setFriendId(friendId);
             this.friendMapper.upsert(rel);
-            //TODO sync to im
+            this.syncAddFriend(appkey, currentUserId, friendId);
             
             FriendApplication app = new FriendApplication();
             app.setRecipientId(friendId);
@@ -136,13 +138,14 @@ public class FriendService {
             rels.add(rel);
 
             FriendRel rel2 = new FriendRel();
-            rel.setAppkey(appkey);
-            rel.setUserId(friendId);
-            rel.setFriendId(currentUserId);
+            rel2.setAppkey(appkey);
+            rel2.setUserId(friendId);
+            rel2.setFriendId(currentUserId);
             rels.add(rel2);
             int ok = this.friendMapper.batchUpsert(rels);
             if(ok>0){
-                //TODO sync to imserver
+                this.syncAddFriend(appkey, currentUserId, friendId);
+                this.syncAddFriend(appkey, friendId, currentUserId);
                 //TODO send notify msg
             }
         }
@@ -161,13 +164,14 @@ public class FriendService {
             rels.add(rel);
 
             FriendRel rel2 = new FriendRel();
-            rel.setAppkey(appkey);
-            rel.setUserId(sponsorId);
-            rel.setFriendId(currentUserId);
+            rel2.setAppkey(appkey);
+            rel2.setUserId(sponsorId);
+            rel2.setFriendId(currentUserId);
             rels.add(rel2);
             int ok = this.friendMapper.batchUpsert(rels);
             if(ok>0){
-                //TODO sync to imserver
+                this.syncAddFriend(appkey, currentUserId, sponsorId);
+                this.syncAddFriend(appkey, sponsorId, currentUserId);
                 //TODO send notify msg
             }
         }else{
@@ -180,7 +184,39 @@ public class FriendService {
         String currentUserId = RequestContext.getCurrentUserIdFromCtx();
         int ok = this.friendMapper.batchDelete(appkey, currentUserId, friendIds);
         if(ok>0){
-            //TODO sync to imserver
+            for (String friendId : friendIds) {
+                this.friendMapper.batchDelete(appkey, friendId, Arrays.asList(currentUserId));
+                this.syncDelFriend(appkey, currentUserId, friendId);
+                this.syncDelFriend(appkey, friendId, currentUserId);
+            }
+        }
+    }
+
+    private void syncAddFriend(String appkey, String userId, String friendId) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null) {
+            return;
+        }
+        try {
+            com.juggle.im.models.friend.FriendIds req = new com.juggle.im.models.friend.FriendIds();
+            req.setUserId(userId).setFriendIds(new String[]{friendId});
+            sdk.friend.add(req);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void syncDelFriend(String appkey, String userId, String friendId) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null) {
+            return;
+        }
+        try {
+            com.juggle.im.models.friend.FriendIds req = new com.juggle.im.models.friend.FriendIds();
+            req.setUserId(userId).setFriendIds(new String[]{friendId});
+            sdk.friend.remove(req);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

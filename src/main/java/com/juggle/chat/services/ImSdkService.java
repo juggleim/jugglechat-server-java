@@ -10,7 +10,14 @@ public class ImSdkService {
         if(appInfo == null){
             return null;
         }
-        JuggleIm jimSdk = new JuggleIm(appkey, appInfo.getAppSecret(), "http://127.0.0.1:9001");
+        String imApiDomain = System.getProperty("im.api.domain");
+        if (imApiDomain == null || imApiDomain.isEmpty()) {
+            imApiDomain = System.getenv("IM_API_DOMAIN");
+        }
+        if (imApiDomain == null || imApiDomain.isEmpty()) {
+            imApiDomain = "http://127.0.0.1:9001";
+        }
+        JuggleIm jimSdk = new JuggleIm(appkey, appInfo.getAppSecret(), imApiDomain);
         return jimSdk;
     }
 }

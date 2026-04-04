@@ -1,5 +1,6 @@
 package com.juggle.chat.services;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,7 @@ public class FriendCheckService {
     private FriendRelMapper friendMapper;
 
     public boolean checkFriend(String userId, String friendId){
-        Map<String,Boolean> map = this.checkFriends(userId, List.of(friendId));
+        Map<String,Boolean> map = this.checkFriends(userId, Arrays.asList(friendId));
         return map.get(friendId);
     }
 

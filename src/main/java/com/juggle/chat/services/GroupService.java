@@ -1,9 +1,13 @@
 package com.juggle.chat.services;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.annotation.Resource;
 
@@ -36,6 +40,14 @@ import com.juggle.chat.models.User;
 import com.juggle.chat.models.UserExtKeys;
 import com.juggle.chat.utils.CommonUtil;
 import com.juggle.chat.utils.N3d;
+import com.juggle.im.JuggleIm;
+import com.juggle.im.models.ResponseResult;
+import com.juggle.im.models.group.GroupAdd;
+import com.juggle.im.models.group.GroupDel;
+import com.juggle.im.models.group.GroupMemReq;
+import com.juggle.im.models.group.GroupSetting;
+import com.juggle.im.models.group.GroupUpd;
+import com.juggle.im.models.group.mute.GroupMuteReq;
 
 @Service
 public class GroupService {
@@ -80,7 +92,7 @@ public class GroupService {
             grpMembers.add(member);
         }
         this.grpMemberMapper.batchCreate(grpMembers);
-        //TODO sync to imserver
+        this.syncCreateGroup(appkey, grpId, grpInfo.getGroupName(), grpInfo.getGroupPortrait(), memberIds);
         //TODO send notify msg
     }
 
@@ -89,7 +101,7 @@ public class GroupService {
         String requestId = RequestContext.getCurrentUserIdFromCtx();
         int ok = this.grpMapper.updateGrpName(appkey, grp.getGroupId(), grp.getGroupName(), grp.getGroupPortrait());
         if(ok>0){
-            //TODO sync to imserver
+            this.syncUpdateGroup(appkey, grp.getGroupId(), grp.getGroupName(), grp.getGroupPortrait());
             //TODO send notify msg
         }
     }
@@ -101,7 +113,7 @@ public class GroupService {
             ok = this.grpMemberMapper.deleteByGroupId(appkey, groupId);
             if(ok>0){
                 //TODO send notify msg
-                //TODO sync to imserver
+                this.syncDissolveGroup(appkey, groupId);
             }
         }
     }
@@ -214,7 +226,7 @@ public class GroupService {
         member.setAppkey(appkey);
         int succ = this.grpMemberMapper.create(member);
         if(succ>0){
-            //TODO sync to imserver
+            this.syncAddGroupMembers(appkey, groupId, Arrays.asList(userId));
             //TODO send notify msg
         }
     }
@@ -258,7 +270,7 @@ public class GroupService {
         }
         if(directAddMemberIds.size()>0){
             List<GroupMember> grpMembers = new ArrayList<>();
-            for (String memberId : memberIds) {
+            for (String memberId : directAddMemberIds) {
                 GroupMember grpMember = new GroupMember();
                 grpMember.setGroupId(groupId);
                 grpMember.setMemberId(memberId);
@@ -268,7 +280,7 @@ public class GroupService {
             if(grpMembers.size()>0){
                 int succ = this.grpMemberMapper.batchCreate(grpMembers);
                 if(succ>0){
-                    //TODO sync to imerver
+                    this.syncAddGroupMembers(appkey, groupId, directAddMemberIds);
                     //TODO send notify msg
                 }
             }
@@ -288,7 +300,7 @@ public class GroupService {
         String appkey = RequestContext.getAppkeyFromCtx();
         int succ = this.grpMapper.updateGroupMuteStatus(appkey, groupId, isMute);
         if(succ>0){
-            //TODO sync to imserver
+            this.syncSetGroupMute(appkey, groupId, isMute);
         }
     }
 
@@ -320,7 +332,7 @@ public class GroupService {
         grpExt.setAppkey(appkey);
         int succ = this.grpExtMapper.upsert(grpExt);
         if(succ>0){
-            //TODO sync to imserver
+            this.syncSetGroupSettings(appkey, groupId, Collections.singletonMap(GroupExtKeys.GrpExtKey_HideGrpMsg, grpExt.getItemValue()));
         }
     }
 
@@ -368,5 +380,311 @@ public class GroupService {
             }
         }
         return ret;
+    }
+
+    public void quitGroup(String groupId) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        String requesterId = RequestContext.getCurrentUserIdFromCtx();
+        this.grpMemberMapper.batchDelete(appkey, groupId, Arrays.asList(requesterId));
+        this.syncDelGroupMembers(appkey, groupId, Arrays.asList(requesterId));
+    }
+
+    public void addGroupMembers(String groupId, List<String> memberIds) throws JimException {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return;
+        }
+        String appkey = RequestContext.getAppkeyFromCtx();
+        Set<String> dedup = new HashSet<>(memberIds);
+        List<GroupMember> grpMembers = new ArrayList<>();
+        for (String memberId : dedup) {
+            GroupMember grpMember = new GroupMember();
+            grpMember.setGroupId(groupId);
+            grpMember.setMemberId(memberId);
+            grpMember.setAppkey(appkey);
+            grpMembers.add(grpMember);
+        }
+        if (!grpMembers.isEmpty()) {
+            this.grpMemberMapper.batchCreate(grpMembers);
+            this.syncAddGroupMembers(appkey, groupId, new ArrayList<>(dedup));
+        }
+    }
+
+    public void delGroupMembers(String groupId, List<String> memberIds) throws JimException {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return;
+        }
+        String appkey = RequestContext.getAppkeyFromCtx();
+        this.grpMemberMapper.batchDelete(appkey, groupId, memberIds);
+        this.syncDelGroupMembers(appkey, groupId, memberIds);
+    }
+
+    public com.juggle.chat.apimodels.GroupMembersResult qryGroupMembers(String groupId, Integer limit, String offset) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        long startId = 0L;
+        if (offset != null && !offset.isEmpty()) {
+            try {
+                startId = N3d.decode(offset);
+            } catch (Exception ignore) {
+                startId = 0L;
+            }
+        }
+        int queryLimit = (limit == null || limit <= 0) ? 100 : limit;
+        List<GroupMember> members = this.grpMemberMapper.queryMembers(appkey, groupId, startId, queryLimit);
+        com.juggle.chat.apimodels.GroupMembersResult ret = new com.juggle.chat.apimodels.GroupMembersResult();
+        ret.setItems(new ArrayList<>());
+        if (members != null) {
+            for (GroupMember member : members) {
+                GroupMemberInfo info = new GroupMemberInfo();
+                info.setUserId(member.getMemberId());
+                info.setNickname(member.getNickname());
+                info.setAvatar(member.getUserPortrait());
+                info.setMemberType(member.getMemberType() == null ? 0 : member.getMemberType());
+                ret.getItems().add(info);
+                try {
+                    ret.setOffset(N3d.encode(member.getId()));
+                } catch (Exception ignore) {
+                    ret.setOffset(null);
+                }
+            }
+        }
+        return ret;
+    }
+
+    public com.juggle.chat.apimodels.GroupMemberExistsResult checkGroupMembers(String groupId, List<String> memberIds) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        com.juggle.chat.apimodels.GroupMemberExistsResult ret = new com.juggle.chat.apimodels.GroupMemberExistsResult();
+        ret.setGroupId(groupId);
+        Map<String, Boolean> existMap = new HashMap<>();
+        if (memberIds != null) {
+            for (String memberId : memberIds) {
+                existMap.put(memberId, false);
+            }
+            List<GroupMember> members = this.grpMemberMapper.findByMemberIds(appkey, groupId, memberIds);
+            if (members != null) {
+                for (GroupMember member : members) {
+                    existMap.put(member.getMemberId(), true);
+                }
+            }
+        }
+        ret.setMemberExistMap(existMap);
+        return ret;
+    }
+
+    public void setGroupAnnouncement(String groupId, String content) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        GroupExt ext = new GroupExt();
+        ext.setGroupId(groupId);
+        ext.setItemKey(GroupExtKeys.GrpExtKey_GrpAnnouncement);
+        ext.setItemValue(content == null ? "" : content);
+        ext.setItemType(UserExtKeys.AttItemType_Setting);
+        ext.setAppkey(appkey);
+        this.grpExtMapper.upsert(ext);
+    }
+
+    public com.juggle.chat.apimodels.GroupAnnouncement getGroupAnnouncement(String groupId) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        com.juggle.chat.apimodels.GroupAnnouncement ret = new com.juggle.chat.apimodels.GroupAnnouncement();
+        ret.setGroupId(groupId);
+        GroupExt ext = this.grpExtMapper.find(appkey, groupId, GroupExtKeys.GrpExtKey_GrpAnnouncement);
+        if (ext != null) {
+            ret.setContent(ext.getItemValue());
+        }
+        return ret;
+    }
+
+    public void setGroupDisplayName(String groupId, String displayName) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        String memberId = RequestContext.getCurrentUserIdFromCtx();
+        this.grpMemberMapper.updateGrpDisplayName(appkey, groupId, memberId, displayName);
+    }
+
+    public com.juggle.chat.apimodels.GroupInfos qryMyGroups(Integer count, String offset) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        String memberId = RequestContext.getCurrentUserIdFromCtx();
+        long startId = 0L;
+        if (offset != null && !offset.isEmpty()) {
+            try {
+                startId = N3d.decode(offset);
+            } catch (Exception ignore) {
+                startId = 0L;
+            }
+        }
+        int queryCount = (count == null || count <= 0) ? 20 : count;
+        List<GroupMember> groups = this.grpMemberMapper.queryGroupsByMemberId(appkey, memberId, startId, queryCount);
+        com.juggle.chat.apimodels.GroupInfos ret = new com.juggle.chat.apimodels.GroupInfos();
+        ret.setItems(new ArrayList<>());
+        if (groups != null) {
+            for (GroupMember group : groups) {
+                GroupInfo info = new GroupInfo();
+                info.setGroupId(group.getGroupId());
+                info.setGroupName(group.getGroupName());
+                info.setGroupPortrait(group.getGroupPortrait());
+                ret.getItems().add(info);
+                try {
+                    ret.setOffset(N3d.encode(group.getId()));
+                } catch (Exception ignore) {
+                    ret.setOffset(null);
+                }
+            }
+        }
+        return ret;
+    }
+
+    public com.juggle.chat.apimodels.GroupApplications qryMyGrpApplications(long start, int count, int order) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        String userId = RequestContext.getCurrentUserIdFromCtx();
+        List<GrpApplication> apps = this.grpApplicationMapper.queryMyGrpApplications(appkey, userId, start, count, order > 0);
+        return buildGrpApplications(apps);
+    }
+
+    public com.juggle.chat.apimodels.GroupApplications qryMyPendingGrpInvitations(long start, int count, int order) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        String userId = RequestContext.getCurrentUserIdFromCtx();
+        List<GrpApplication> apps = this.grpApplicationMapper.queryMyPendingGrpInvitations(appkey, userId, start, count, order > 0);
+        return buildGrpApplications(apps);
+    }
+
+    public com.juggle.chat.apimodels.GroupApplications qryGrpInvitations(String groupId, long start, int count, int order) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        List<GrpApplication> apps = this.grpApplicationMapper.queryGrpInvitations(appkey, groupId, start, count, order > 0);
+        return buildGrpApplications(apps);
+    }
+
+    public com.juggle.chat.apimodels.GroupApplications qryGrpPendingApplications(String groupId, long start, int count, int order) throws JimException {
+        String appkey = RequestContext.getAppkeyFromCtx();
+        List<GrpApplication> apps = this.grpApplicationMapper.queryGrpPendingApplications(appkey, groupId, start, count, order > 0);
+        return buildGrpApplications(apps);
+    }
+
+    private com.juggle.chat.apimodels.GroupApplications buildGrpApplications(List<GrpApplication> apps) {
+        com.juggle.chat.apimodels.GroupApplications ret = new com.juggle.chat.apimodels.GroupApplications();
+        ret.setItems(new ArrayList<>());
+        if (apps == null) {
+            return ret;
+        }
+        for (GrpApplication app : apps) {
+            com.juggle.chat.apimodels.GroupApplicationItem item = new com.juggle.chat.apimodels.GroupApplicationItem();
+            GroupInfo groupInfo = new GroupInfo();
+            groupInfo.setGroupId(app.getGroupId());
+            item.setGroupInfo(groupInfo);
+            item.setApplyType(app.getApplyType() == null ? 0 : app.getApplyType());
+            item.setApplyTime(app.getApplyTime() == null ? 0L : app.getApplyTime());
+            item.setStatus(app.getStatus() == null ? 0 : app.getStatus());
+            if (app.getSponsorId() != null) {
+                item.setSponsor(this.userService.getUserInfo(app.getSponsorId()));
+            }
+            if (app.getRecipientId() != null) {
+                item.setRecipient(this.userService.getUserInfo(app.getRecipientId()));
+            }
+            if (app.getInviterId() != null) {
+                item.setInviter(this.userService.getUserInfo(app.getInviterId()));
+            }
+            if (app.getOperatorId() != null) {
+                item.setOperator(this.userService.getUserInfo(app.getOperatorId()));
+            }
+            ret.getItems().add(item);
+        }
+        return ret;
+    }
+
+    private void syncCreateGroup(String appkey, String groupId, String groupName, String groupPortrait, List<String> memberIds) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null) {
+            return;
+        }
+        try {
+            GroupAdd req = new GroupAdd();
+            req.setGroupId(groupId).setGroupName(groupName).setGroupPortrait(groupPortrait).setMemberIds(memberIds);
+            sdk.group.create(req);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void syncUpdateGroup(String appkey, String groupId, String groupName, String groupPortrait) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null) {
+            return;
+        }
+        try {
+            GroupUpd req = new GroupUpd();
+            req.setGroupId(groupId);
+            req.setGroupName(groupName);
+            req.setGroupPortrait(groupPortrait);
+            sdk.group.update(req);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void syncDissolveGroup(String appkey, String groupId) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null) {
+            return;
+        }
+        try {
+            sdk.group.dismiss(new GroupDel().setGroupId(groupId));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void syncAddGroupMembers(String appkey, String groupId, List<String> memberIds) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null || memberIds == null || memberIds.isEmpty()) {
+            return;
+        }
+        try {
+            GroupMemReq req = new GroupMemReq();
+            req.setGroupId(groupId);
+            req.setMemberIds(memberIds);
+            sdk.group.join(req);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void syncDelGroupMembers(String appkey, String groupId, List<String> memberIds) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null || memberIds == null || memberIds.isEmpty()) {
+            return;
+        }
+        try {
+            GroupMemReq req = new GroupMemReq();
+            req.setGroupId(groupId);
+            req.setMemberIds(memberIds);
+            sdk.group.quit(req);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void syncSetGroupMute(String appkey, String groupId, int isMute) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null) {
+            return;
+        }
+        try {
+            GroupMuteReq req = new GroupMuteReq();
+            req.setGroupId(groupId).setIsMute(isMute);
+            sdk.group.mute(req);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void syncSetGroupSettings(String appkey, String groupId, Map<String, String> settings) {
+        JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+        if (sdk == null || settings == null || settings.isEmpty()) {
+            return;
+        }
+        try {
+            GroupSetting req = new GroupSetting();
+            req.setGroupId(groupId);
+            req.setSettings(settings);
+            ResponseResult ignored = sdk.group.updateSettings(req);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

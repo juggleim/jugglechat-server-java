@@ -1,6 +1,6 @@
 package com.juggle.chat.controllers;
 
-import java.util.List;
+import java.util.Arrays;
 
 import javax.annotation.Resource;
 
@@ -38,7 +38,7 @@ public class FriendController {
             throw new JimException(JimErrorCode.ErrorCode_APP_REQ_BODY_ILLEGAL);
         }
         FriendIds friendIds = new FriendIds();
-        friendIds.setFriendIds(List.of(friend.getFriendId()));
+        friendIds.setFriendIds(Arrays.asList(friend.getFriendId()));
         this.friendService.addFriends(friendIds);
         return new Result(0, "");
     }

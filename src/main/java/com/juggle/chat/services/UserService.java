@@ -1,7 +1,9 @@
 package com.juggle.chat.services;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Resource;
 
@@ -67,10 +69,12 @@ public class UserService {
         int ok = userMapper.update(appkey,user.getUserId(),user.getNickname(),user.getAvatar());
         if(ok>0){
             JuggleIm sdk = ImSdkService.getJimSdk(appkey);
-            try {
-                sdk.user.register(new com.juggle.im.models.user.UserInfo(user.getUserId(), user.getNickname(), user.getAvatar()));
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (sdk != null) {
+                try {
+                    sdk.user.update(new com.juggle.im.models.user.UserInfo(user.getUserId(), user.getNickname(), user.getAvatar()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -101,7 +105,25 @@ public class UserService {
         exts.add(new UserExt(appkey, currentUserId, UserExtKeys.UserExtKey_GrpVerifyType, CommonUtil.int2String(settings.getGrpVerifyType()), UserExtKeys.AttItemType_Setting));
         if(exts.size()>0){
             this.userExtMapper.batchUpsert(exts);
-            //TODO sync to im
+            Map<String, String> imSettings = new HashMap<>();
+            if (settings.getLanguage() != null && !settings.getLanguage().isEmpty()) {
+                imSettings.put("language", settings.getLanguage());
+            }
+            if (settings.getUndisturb() != null && !settings.getUndisturb().isEmpty()) {
+                imSettings.put("undisturb", settings.getUndisturb());
+            }
+            if (!imSettings.isEmpty()) {
+                JuggleIm sdk = ImSdkService.getJimSdk(appkey);
+                if (sdk != null) {
+                    try {
+                        com.juggle.im.models.user.UserInfo imUser = new com.juggle.im.models.user.UserInfo();
+                        imUser.setUserId(currentUserId).setSettings(imSettings);
+                        sdk.user.setSettings(imUser);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
     }
 

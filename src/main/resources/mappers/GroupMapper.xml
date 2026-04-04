@@ -44,7 +44,7 @@
         WHERE app_key = #{appkey} AND group_id = #{groupId}
     </update>
 
-    <update id="updatecreatorId">
+    <update id="updateCreatorId">
         UPDATE groupinfos
         SET creator_id = #{creatorId}
         WHERE app_key = #{appkey} AND group_id = #{groupId}

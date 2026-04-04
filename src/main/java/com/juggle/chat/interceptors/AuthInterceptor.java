@@ -1,5 +1,6 @@
 package com.juggle.chat.interceptors;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +42,7 @@ public class AuthInterceptor implements HandlerInterceptor{
 
         String currentUserId = "";
         try{
-            List<String> excludePaths = List.of(
+            List<String> excludePaths = Arrays.asList(
                 "/jim/hello",
                 "/jim/login",
                 "/jim/sms/send",
